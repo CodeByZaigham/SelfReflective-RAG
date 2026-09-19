@@ -13,3 +13,4 @@ class state(TypedDict):
 
      retrieval_needed:Literal["needed","not needed"]
      relevent_docs:List[Document]
+     is_answer_supported:Literal["supported","not supported"]

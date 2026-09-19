@@ -112,7 +112,54 @@ def docs_relevence(state:state):
         result = response.content.strip().lower()
         if(result == "relevent"): relevent_docs.append(doc)
 
-    return {"relevent_docs":relevent_docs}
+    if relevent_docs: return {"relevent_docs":relevent_docs}
+    else:return {"response":"no answer found in docs"} 
+
+def is_answer_supported(state:state):
+    answer=state["response"]
+    relevent_docs=state["relevent_docs"]
+    context="".join(doc.page_content for doc in relevent_docs).strip()
+    prompt=ChatPromptTemplate.from_messages([
+    (
+        "system",
+        """
+        You are a strict factual-grounding evaluator for a Retrieval-Augmented Generation (RAG) system.
+
+        Your task is to determine whether the GENERATED ANSWER is fully supported by the provided CONTEXT.
+
+        Evaluation rules:
+
+        1. Examine EVERY factual claim, statement, number, date, name, relationship, and conclusion in the answer.
+        2. A claim is supported only if it can be directly verified from the provided context.
+        3. The answer must not contain information derived from your own knowledge, assumptions, inference, or information outside the context.
+        4. If even ONE factual claim is unsupported, partially supported, contradicted, or cannot be verified from the context, return `not supported`.
+        5. Do not consider a claim supported merely because it is plausible or logically likely.
+        6. If the answer contains multiple claims, ALL of them must be grounded in the context.
+        7. Ignore stylistic differences and paraphrasing when the underlying fact is clearly supported.
+        8. Do not judge whether the answer is well-written or relevant. Judge ONLY whether its factual content is grounded in the context.
+        9. If the context is empty or insufficient to verify the answer, return `not supported`.
+        10. Your output MUST be exactly one of these two values:
+
+        supported
+        not supported
+
+        Do not provide explanations, reasoning, punctuation, quotes, or any other text.
+        """
+    ),
+    (
+        "human",
+        """
+        CONTEXT:
+        {context}
+
+        GENERATED ANSWER:
+        {answer}
+        """
+    )
+    ])
+    chain=RunnableSequence(prompt | get_llm)
+    response=chain.invoke({"context":context , "answer": answer})
+    return{"is_answer_supported":response.content}
 
 
 
