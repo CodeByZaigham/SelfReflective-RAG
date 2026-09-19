@@ -14,4 +14,4 @@ class state(TypedDict):
      retrieval_needed:Literal["needed","not needed"]
      relevent_docs:List[Document]
      is_answer_supported:Literal["supported","not supported"]
-     is_answer_usable: Literal["supported","not supported"]
+     is_answer_usable: Literal["usable","not usable"]

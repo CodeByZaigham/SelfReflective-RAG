@@ -209,7 +209,54 @@ def revise_answer(state:state):
 def is_answer_usable(state:state):
     query=state["query"]
     answer=state["response"]
-    
+    prompt=ChatPromptTemplate.from_messages([
+    (
+    "system",
+    """
+    You are a strict answer-quality evaluator in a RAG system.
+
+    Your task is to determine whether the GENERATED ANSWER adequately satisfies the USER QUERY.
+
+    Evaluate the answer using these rules:
+
+    1. Determine what the user is asking for in the query.
+    2. Check whether the answer directly addresses what the user asked.
+    3. The answer must provide enough information to satisfy the query.
+    4. If the answer only partially addresses the query, return `not usable`.
+    5. If the answer is vague, evasive, irrelevant, or fails to address the main request, return `not usable`.
+    6. If the query contains multiple requirements, the answer must address all of them to be considered usable.
+    7. Do not judge factual correctness or whether the answer is supported by external context. This evaluator only checks whether the answer satisfies the query.
+    8. Do not use your own knowledge to add missing information.
+    9. Do not rewrite, improve, or explain the answer.
+    10. Your response MUST be exactly one of these two values:
+
+    usable
+    not usable
+
+    Return nothing else.
+    Do not include explanations, punctuation, quotes, markdown, or additional text.
+    """
+            ),
+            (
+                "human",
+                """
+    USER QUERY:
+    {query}
+
+    GENERATED ANSWER:
+    {answer}
+
+    Determine whether the generated answer satisfies the user's query.
+    Return exactly `usable` or `not usable`.
+    """
+    )
+    ])
+    chain=RunnableSequence(prompt | get_llm)
+    response=chain.invoke({"query":query , "answer": answer})
+    return{"is_answer_usable":response.content}
+
+
+
 
 
 def generate_direct(state:state):
