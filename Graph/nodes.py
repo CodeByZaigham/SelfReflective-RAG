@@ -161,7 +161,50 @@ def is_answer_supported(state:state):
     response=chain.invoke({"context":context , "answer": answer})
     return{"is_answer_supported":response.content}
 
+def revise_answer(state:state):
+    relevent_docs=state["relevent_docs"]
+    prev_answer=state["response"]
 
+    context="".join(doc.page_content for doc in relevent_docs).strip()
+
+    prompt=ChatPromptTemplate.from_messages([
+    (
+        "system",
+        """
+        You are an answer revision component in a strict Retrieval-Augmented Generation (RAG) system.
+
+        Your task is to revise the GENERATED ANSWER so that EVERY factual statement is fully supported by the provided CONTEXT.
+
+        Rules:
+        - Use ONLY information explicitly supported by the CONTEXT.
+        - Do not use your own knowledge or information outside the CONTEXT.
+        - Remove any claim that cannot be verified from the CONTEXT.
+        - Do not add new facts, explanations, examples, assumptions, or conclusions.
+        - Preserve claims from the original answer only when they are supported by the CONTEXT.
+        - If the original answer contains unsupported information, rewrite or remove that information.
+        - You may reorganize or rephrase the answer to make it accurate and coherent.
+        - The revised answer must directly answer the user's original question as far as the CONTEXT allows.
+        - If the CONTEXT does not contain enough information to answer something, explicitly state that the provided context does not contain enough information.
+        - Do not mention this revision process.
+        - Return ONLY the revised answer.
+
+        Your highest priority is factual grounding: every factual claim in the final answer must be supported by the CONTEXT.
+        """
+    ),
+    (
+        "human",
+        """
+        CONTEXT:
+        {context}
+
+        GENERATED ANSWER:
+        {prev_answer}
+        """
+    )
+    ])
+    chain=RunnableSequence(prompt | get_llm)
+    response=chain.invoke({"context":context , "prev_answer": prev_answer})
+    return{"response":response.content}
 
 
 def generate_direct(state:state):
