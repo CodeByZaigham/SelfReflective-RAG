@@ -12,3 +12,4 @@ class state(TypedDict):
      response:str
 
      retrieval_needed:Literal["needed","not needed"]
+     relevent_docs:List[Document]

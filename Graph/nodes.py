@@ -74,8 +74,47 @@ def decide_retrieval(state:state):
 
 
 def docs_relevence(state:state):
-    
+    query=state["query"]
     retrieved_docs=state["retrieved_docs"]
+
+    relevent_docs=[]
+
+    prompt=ChatPromptTemplate.from_messages([
+        (
+        "system",
+        """
+        You are a document relevance classifier for a Retrieval-Augmented Generation (RAG) system.
+
+        Your task is to determine whether the given document contains information that is directly useful for answering the user's query.
+
+        Rules:
+        - Return exactly one word: `relevent` or `not_relevent`.
+        - Return `relevent` only if the document contains information that can directly help answer the query.
+        - If the document is only loosely related, contains background information without answering the query, or does not provide useful evidence, return `not_relevent`.
+        - Do not use your own knowledge to judge whether the document is useful.
+        - Do not explain your decision.
+        - Do not return punctuation, quotes, or any additional text.
+        """
+        ),
+        ("human",
+        """
+        User Query:
+        {query}
+
+        Document:
+        {document}
+        """
+        )
+    ])
+    chain=RunnableSequence(prompt | get_llm)
+    for doc in retrieved_docs:
+        response=chain.invoke({"document":doc.page_content , "query":query})
+        result = response.content.strip().lower()
+        if(result == "relevent"): relevent_docs.append(doc)
+
+    return {"relevent_docs":relevent_docs}
+
+
 
 
 def generate_direct(state:state):
@@ -109,8 +148,8 @@ def generate_direct(state:state):
     return {"response":response.content}
 
 
-def generate_response(state:state):
-    context=state["retrieved_docs"]
+def generate_from_context(state:state):
+    context=state["relevent_docs"]
     query=state["query"]
     prompt = ChatPromptTemplate.from_messages([
     (
