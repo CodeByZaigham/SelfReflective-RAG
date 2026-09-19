@@ -206,6 +206,11 @@ def revise_answer(state:state):
     response=chain.invoke({"context":context , "prev_answer": prev_answer})
     return{"response":response.content}
 
+def is_answer_usable(state:state):
+    query=state["query"]
+    answer=state["response"]
+    
+
 
 def generate_direct(state:state):
     query=state["query"]
