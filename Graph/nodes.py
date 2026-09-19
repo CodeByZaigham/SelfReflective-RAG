@@ -255,8 +255,47 @@ def is_answer_usable(state:state):
     response=chain.invoke({"query":query , "answer": answer})
     return{"is_answer_usable":response.content}
 
+def rewrite_query(state:state):
+    query=state["query"]
+    prompt=ChatPromptTemplate.from_messages([
+    (
+        "system",
+        """
+        You are a query rewriting component in a Retrieval-Augmented Generation (RAG) system.
 
+        Your task is to rewrite the user's query into a clearer and more retrieval-friendly query for searching a knowledge base.
 
+        Rules:
+        - Preserve the exact intent of the user's original query.
+        - Make the query clear, precise, and self-contained.
+        - Resolve obvious ambiguity using only information present in the original query.
+        - Include important keywords and concepts already implied by the query.
+        - Remove unnecessary conversational wording.
+        - Do not answer the query.
+        - Do not add information that is not present or implied in the original query.
+        - Do not change the user's intended meaning.
+        - The output must be a single optimized search query.
+        - Do not provide explanations, reasoning, labels, quotes, markdown, or multiple queries.
+        - Your entire response MUST contain only the rewritten query.
+
+        ORIGINAL USER QUERY:
+        {query}
+        """
+    ),
+    (
+        "human",
+        """
+        Rewrite the following query for optimal document retrieval:
+
+        {query}
+
+        Return ONLY the rewritten query.
+        """
+    )
+    ])
+    chain=RunnableSequence(prompt | get_llm)
+    response=chain.invoke({"query":query})
+    return{"query":response.content}
 
 
 def generate_direct(state:state):
