@@ -15,3 +15,6 @@ class state(TypedDict):
      relevent_docs:List[Document]
      is_answer_supported:Literal["supported","not supported"]
      is_answer_usable: Literal["usable","not usable"]
+
+     revise_attempts:int
+     retrieve_attempts:int
