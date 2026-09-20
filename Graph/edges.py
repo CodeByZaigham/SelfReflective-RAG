@@ -1,4 +1,5 @@
 from langgraph.graph import StateGraph,START,END
+import os
 from nodes import (
      load_document,
      create_database,
@@ -28,9 +29,14 @@ graph.add_node("revise_answer",revise_answer)
 graph.add_node("docs_relevence",docs_relevence)
 graph.add_node("decide_retrieval",decide_retrieval)
 
+def check_database_availability():
+     if os.path.exists("chromadb"):
+          return True
+     return False
+
 def retrieval_needed(state:state):
      if state["retrieval_needed"] == "needed":
-          return "load_document"
+          return "vector_database"
      else: return "generate_direct"
 
 def is_relevent(state:state):
@@ -39,16 +45,19 @@ def is_relevent(state:state):
      else: END
 
 def is_factual(state:state):
-     if state["is_answer_supported"] == "supported":
+     if state["is_answer_supported"] == "supported" or state["revise_attempts"] >= 2:
           return "is_answer_usable"
-     else: "revise_answer"
+     else: return "revise_answer"
 
 def is_answer_complete(state:state):
      if state["is_answer_usable"] == "usable":
           return END
-     elif state["is_answer_usable"] == "not usable":
+     elif state["is_answer_usable"] == "not usable" and state["retrieve_attempts"] < 2:
           state["retrieve_attempts"] += 1 
-          return ""
+          return "rewrite_query"
+     else:
+          print("no answer found (from database)") 
+          return END
 
 
 graph.add_edge(START,"decide_retrieval")
@@ -57,12 +66,17 @@ graph.add_edge("load_document","vector_database")
 graph.add_edge("vector_database","retriever")
 
 
-graph.add_edge("retriever",is_relevent)
+graph.add_edge("retriever","docs_relevence")
+
+graph.add_conditional_edges("docs_relevence",is_relevent)
 
 graph.add_edge("generate_direct",END)
 graph.add_edge("response_generator_from_context","is_answer_supported")
-graph.add_edge("is_answer_supported",is_factual)
+graph.add_conditional_edges("is_answer_supported",is_factual)
 
-graph.add_node("is_answer_usable",is_answer_complete)
+graph.add_edge("revise_answer","is_answer_supported")
+
+graph.add_conditional_edges("is_answer_usable",is_answer_complete)
+graph.add_edge("rewrite_query","retriever")
 
 workflow=graph.compile()

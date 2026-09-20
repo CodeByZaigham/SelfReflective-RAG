@@ -1,10 +1,10 @@
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from langsmith import traceable
+# from langsmith import traceable
 
 EMBEDDING_MODEL=HuggingFaceEmbeddings(model="sentence-transformers/all-MiniLM-L6-v2")
 
-@traceable(name="creating vector embeddings")
+# @traceable(name="creating vector embeddings")
 def create_embeddings(chunks:list):
         database=Chroma.from_documents(
                 documents=chunks,
@@ -13,6 +13,9 @@ def create_embeddings(chunks:list):
         )
         return database
 
-@traceable(name="loading vector embeddings")
+# @traceable(name="loading vector embeddings")
 def load_embeedings():
-        pass
+        return Chroma(
+                persist_directory="chromadb",
+                embedding_function=EMBEDDING_MODEL
+        )

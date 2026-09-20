@@ -1,5 +1,5 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langsmith import traceable
+# from langsmith import traceable
 
 pdf_txt_splitter=RecursiveCharacterTextSplitter(
      chunk_size=1200,
@@ -14,17 +14,17 @@ ppt_splitter=RecursiveCharacterTextSplitter(
      chunk_overlap=100
 )
 
-@traceable(name="creating pdf chunks")
+# @traceable(name="creating pdf chunks")
 def chunk_pdf_txt(doc):
      chunks=pdf_txt_splitter.split_documents(doc)
      return chunks
 
-@traceable(name="creating csv chunks")
+# @traceable(name="creating csv chunks")
 def chunk_csv(doc):
      chunks=csv_splitter.split_documents(doc)
      return chunks
 
-@traceable(name="creating ppt chunks")
+# @traceable(name="creating ppt chunks")
 def chunk_ppt(doc):
      chunks=ppt_splitter.split_documents(doc)
      return chunks

@@ -16,8 +16,8 @@ def load_document(state:state):
     return{"chunks":chunks}
 
 def create_database(state:state):
-    chunks=state["chunks"]
-    database=create_embeddings(chunks)
+    # chunks=state["chunks"]
+    database=load_embeedings()
     return{"database":database}
 
 def retriever(state:state):
@@ -27,6 +27,7 @@ def retriever(state:state):
     return {"retrieved_docs":retrieved_docs}
 
 def decide_retrieval(state:state):
+    print("\n deciding retrieval \n")
     query=state["query"]
     prompt=ChatPromptTemplate.from_messages([
         ("system","""
@@ -68,12 +69,13 @@ def decide_retrieval(state:state):
         """),
         ("human","{query}")
     ])
-    chain=RunnableSequence(prompt | get_llm)
+    chain=RunnableSequence(prompt | get_llm())
     response=chain.invoke({"query":query})
     return {"retrieval_needed":response.content}
 
 
 def docs_relevence(state:state):
+    print("\n checking docs relevence \n")
     query=state["query"]
     retrieved_docs=state["retrieved_docs"]
 
@@ -106,7 +108,7 @@ def docs_relevence(state:state):
         """
         )
     ])
-    chain=RunnableSequence(prompt | get_llm)
+    chain=RunnableSequence(prompt | get_llm())
     for doc in retrieved_docs:
         response=chain.invoke({"document":doc.page_content , "query":query})
         result = response.content.strip().lower()
@@ -116,6 +118,7 @@ def docs_relevence(state:state):
     else:return {"response":"no answer found in docs"} 
 
 def is_answer_supported(state:state):
+    print("\n checking answer supportiveness \n")
     answer=state["response"]
     relevent_docs=state["relevent_docs"]
     context="".join(doc.page_content for doc in relevent_docs).strip()
@@ -157,11 +160,12 @@ def is_answer_supported(state:state):
         """
     )
     ])
-    chain=RunnableSequence(prompt | get_llm)
+    chain=RunnableSequence(prompt | get_llm())
     response=chain.invoke({"context":context , "answer": answer})
     return{"is_answer_supported":response.content}
 
 def revise_answer(state:state):
+    print("\n revising answer \n")
     relevent_docs=state["relevent_docs"]
     prev_answer=state["response"]
 
@@ -202,11 +206,12 @@ def revise_answer(state:state):
         """
     )
     ])
-    chain=RunnableSequence(prompt | get_llm)
+    chain=RunnableSequence(prompt | get_llm())
     response=chain.invoke({"context":context , "prev_answer": prev_answer})
     return{"response":response.content}
 
 def is_answer_usable(state:state):
+    print("\n checking answer usefulness \n")
     query=state["query"]
     answer=state["response"]
     prompt=ChatPromptTemplate.from_messages([
@@ -236,10 +241,10 @@ def is_answer_usable(state:state):
     Return nothing else.
     Do not include explanations, punctuation, quotes, markdown, or additional text.
     """
-            ),
-            (
-                "human",
-                """
+    ),
+    (
+    "human",
+    """
     USER QUERY:
     {query}
 
@@ -251,11 +256,12 @@ def is_answer_usable(state:state):
     """
     )
     ])
-    chain=RunnableSequence(prompt | get_llm)
+    chain=RunnableSequence(prompt | get_llm())
     response=chain.invoke({"query":query , "answer": answer})
     return{"is_answer_usable":response.content}
 
 def rewrite_query(state:state):
+    print("\n rewriting query \n")
     query=state["query"]
     prompt=ChatPromptTemplate.from_messages([
     (
@@ -293,12 +299,13 @@ def rewrite_query(state:state):
         """
     )
     ])
-    chain=RunnableSequence(prompt | get_llm)
+    chain=RunnableSequence(prompt | get_llm())
     response=chain.invoke({"query":query})
     return{"query":response.content}
 
 
 def generate_direct(state:state):
+    print("\n generating answer without retrieval \n")
     query=state["query"]
     prompt=ChatPromptTemplate.from_messages([
     ("system","""
@@ -324,12 +331,13 @@ def generate_direct(state:state):
     ),
     ("human","{query}")
     ])
-    chain=RunnableSequence(prompt | get_llm)
+    chain=RunnableSequence(prompt | get_llm())
     response=chain.invoke({"query":query})
     return {"response":response.content}
 
 
 def generate_from_context(state:state):
+    print("\n generating answer from context \n")
     context=state["relevent_docs"]
     query=state["query"]
     prompt = ChatPromptTemplate.from_messages([
