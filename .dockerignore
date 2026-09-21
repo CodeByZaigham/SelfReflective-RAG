@@ -1,0 +1,7 @@
+__pycache__/
+.gitignore/
+screenshots/
+Pdfs/
+LICENSE
+README.md
+.venv/
