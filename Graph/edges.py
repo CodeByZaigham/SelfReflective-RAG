@@ -14,9 +14,11 @@ from nodes import (
      decide_retrieval
 )
 from state import state
+from RAG_pipelines.embeddings import load_embeedings
 
 graph=StateGraph(state)
 
+#NODES
 graph.add_node("load_document",load_document)
 graph.add_node("vector_database",create_database)
 graph.add_node("retriever",retriever)
@@ -34,9 +36,14 @@ def check_database_availability():
           return True
      return False
 
+
+#ROUTERS
 def retrieval_needed(state:state):
      if state["retrieval_needed"] == "needed":
-          return "vector_database"
+          if check_database_availability():
+               state["database"]=load_embeedings()
+               return "retriever"
+          else: return "load_document"
      else: return "generate_direct"
 
 def is_relevent(state:state):
@@ -59,7 +66,7 @@ def is_answer_complete(state:state):
           print("no answer found (from database)") 
           return END
 
-
+#EDGES
 graph.add_edge(START,"decide_retrieval")
 graph.add_conditional_edges("decide_retrieval",retrieval_needed)
 graph.add_edge("load_document","vector_database")
@@ -78,5 +85,6 @@ graph.add_edge("revise_answer","is_answer_supported")
 
 graph.add_conditional_edges("is_answer_usable",is_answer_complete)
 graph.add_edge("rewrite_query","retriever")
+
 
 workflow=graph.compile()

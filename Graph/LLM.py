@@ -3,4 +3,4 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def get_llm():
-     return ChatGroq(model="openai/gpt-oss-120b",max_retries=4)
+     return ChatGroq(model="openai/gpt-oss-120b",max_retries=4,streaming=True)

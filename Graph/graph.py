@@ -8,5 +8,11 @@ initialstate={
      "retrieve_attempts":0
 }
 
-response=workflow.invoke(initialstate)
-print(response["response"])
+final_response=None
+
+#values streams state snapshots, not individual tokens.
+for message in workflow.stream(initialstate,stream_mode="values"):
+     if "response" in message:
+          final_response = message["response"]
+
+print(final_response)
