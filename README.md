@@ -8,3 +8,5 @@ LangGraph implementation of Self-RAG, based on “Self-RAG: Learning to Retrieve
 graph architecture explained above for better understanding of nodes
 
 Official Conference Paper Link : https://openreview.net/forum?id=hSyW5go0v8
+
+docker image link: https://hub.docker.com/r/codebyzaigham/self-reflective-rag
